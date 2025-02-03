@@ -3,6 +3,7 @@ import axios from 'axios'
 import Persons from './components/Persons'
 import Filter from './components/Filter'
 import PersonForm from './components/PersonForm'
+import personService from './services/persons'
 
 const App = () => {
   const [persons, setPersons] = useState([])
@@ -10,16 +11,13 @@ const App = () => {
   const [newNumber, setNewNumber] = useState('')
   const [searchKey, setSearchKey] = useState('')
 
-  const hook = () => {
-    axios
-      .get('http://localhost:3001/persons')
-      .then(response => {
-        console.log('promise fulfilled')
-        setPersons(response.data) 
+  useEffect(() => {
+    personService
+      .getAll()
+      .then(initialPersons => {
+        setPersons(initialPersons)
       })
-  }
-
-  useEffect(hook, [])
+  }, [])
 
   const searchPersons = searchKey ? persons.filter(p => p.name.includes(searchKey)) : persons
 
@@ -38,13 +36,28 @@ const App = () => {
       alert(`${newName} is already added to phonebook`)
       return
     }
-    setPersons(persons.concat(newPerson))
-    setNewName('')
-    setNewNumber('')
+    personService
+      .create(newPerson)
+      .then(returnedPerson => {
+        setPersons(persons.concat(returnedPerson))
+        setNewName('')
+        setNewNumber('')
+      })
   }
 
   const handleSearchKey = (event) => {
     setSearchKey(event.target.value)
+  }
+
+  const deletePerson = (id, personName) => {
+    console.log('id name', id, personName)
+    if (confirm(`Delete ${personName} ?`)) {
+      personService
+        .deletePerson(id)
+        .then(returnedPerson => {
+          setPersons(persons.filter(p => p.id !== id))
+        })
+    }
   }
 
   return (
@@ -55,7 +68,7 @@ const App = () => {
       <PersonForm newName={newName} newNumber={newNumber}
         handleNewName={handleNewName} handleNewNumber={handleNewNumber} handleAddNote={handleAddNote} />
       <h2>Numbers</h2>
-      <Persons persons={searchPersons} />
+      <Persons persons={searchPersons} deletePerson={deletePerson}/>
     </div>
   )
 }
