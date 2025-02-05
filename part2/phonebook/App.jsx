@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
-import axios from 'axios'
 import Persons from './components/Persons'
 import Filter from './components/Filter'
 import PersonForm from './components/PersonForm'
+import Notification from './components/Notification'
+import ErrorNotification from './components/ErrorNotification'
 import personService from './services/persons'
 
 const App = () => {
@@ -10,6 +11,8 @@ const App = () => {
   const [newName, setNewName] = useState('')
   const [newNumber, setNewNumber] = useState('')
   const [searchKey, setSearchKey] = useState('')
+  const [message, setMessage] = useState(null)
+  const [errorMessage, setErrorMessage] = useState(null)
 
   useEffect(() => {
     personService
@@ -42,6 +45,12 @@ const App = () => {
             setNewName('')
             setNewNumber('')
           })
+          .catch(error => {
+            setErrorMessage(`${newName} is already removed from server`)
+            setTimeout(()=>{
+              setErrorMessage(null)
+            }, 5000)
+          })
       }
       return
     }
@@ -51,6 +60,10 @@ const App = () => {
         setPersons(persons.concat(returnedPerson))
         setNewName('')
         setNewNumber('')
+        setMessage(`Added ${returnedPerson.name}`)
+        setTimeout(()=> {
+          setMessage(null)
+        }, 5000)
       })
   }
 
@@ -72,6 +85,8 @@ const App = () => {
   return (
     <div>
       <h2>Phonebook</h2>
+      <Notification message={message} />
+      <ErrorNotification message={errorMessage} />
       <Filter search={searchKey} handleSearch={handleSearchKey} />
       <h2>add a new</h2>
       <PersonForm newName={newName} newNumber={newNumber}
