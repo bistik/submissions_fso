@@ -3,12 +3,15 @@ import Search from './components/Search'
 import countriesService from './services/countries'
 import Countries from './components/Countries'
 import Country from './components/Country'
+import weatherService from './services/weather'
+import Weather from './components/Weather'
 
 const App = () => {
   const [searchCountry, setSearchCountry] = useState('')
   const [allCountries, setAllCountries] = useState([])
   const [selectedCountries, setSelectedCountries] = useState([])
   const [selectedCountry, setSelectedCountry] = useState(null)
+  const [weather, setWeather] = useState(null)
 
   useEffect(() => {
     countriesService
@@ -38,26 +41,40 @@ const App = () => {
     if (searchCountries.length > 1 && searchCountries.length <= 10) {
       setSelectedCountries(searchCountries)
       setSelectedCountry(null)
+      setWeather(null)
     }
     if (searchCountries.length === 1) {
-      setSelectedCountries([])
-      countriesService
-        .getCountry(searchCountries[0])
-        .then(country => {
-          setSelectedCountry(country)
-        })
-        .catch(error => {
-          alert('Something went wrong')
-          console.log('error getCountry', error)
-        })
+      handleShow(searchCountries[0])
     }
+  }
+
+  const handleShow = (country) => {
+    countriesService
+      .getCountry(country)
+      .then(country => {
+        const returnedCountry = country
+        setSelectedCountry(returnedCountry)
+        if (returnedCountry) {
+          weatherService
+            .getWeather({country: returnedCountry})
+            .then(weather => {
+                setWeather(weather)
+            })
+        }
+        setSelectedCountries([])
+      })
+      .catch(error => {
+        alert('Something went wrong')
+        console.log('error getCountry', error)
+      })
   }
 
   return (
     <div>
       <Search searchCountry={searchCountry} handleSearch={handleSearch} />
-      <Countries countries={selectedCountries} />
+      <Countries countries={selectedCountries} handleShow={handleShow} />
       <Country country={selectedCountry} />
+      <Weather weather={weather} country={selectedCountry} />
     </div>
   )
 }
